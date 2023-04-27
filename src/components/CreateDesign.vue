@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 
 const widthCanvas = ref(400);
 const heightCanvas = ref(300);
+const zoomScale = ref(1);
 
 var canvas = null
 var canvasb = null
@@ -74,12 +75,12 @@ const addText = () => {
   
 }
 const changeCanvasSize = () => {
-  if(widthCanvas.value == 400)
-    widthCanvas.value = 800
-  else 
-    widthCanvas.value = 400
-  console.log("changeCanvasSize", widthCanvas.value)
-
+  // if(widthCanvas.value == 400)
+  //   widthCanvas.value = 800
+  // else 
+  //   widthCanvas.value = 400
+  // console.log("changeCanvasSize", widthCanvas.value)
+  zoomScale.value = 2
 }
 
 // const removeAll = () => {
@@ -122,6 +123,7 @@ onUpdated(() => {
         class="border border-slate-500"
         :width="widthCanvas-2"
         :height="heightCanvas"
+        :style="{ 'zoom': zoomScale }"
       ></canvas>
       <canvas
         id="b"

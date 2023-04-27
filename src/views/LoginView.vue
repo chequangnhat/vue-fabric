@@ -3,6 +3,11 @@ import { RouterLink, RouterView, useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
 const route = useRoute();
+
+const submitLogin = () => {
+  router.push('/home')
+}
+
 </script>
 <template>
   <!-- <div class="flex justify-center items-center flex-col">

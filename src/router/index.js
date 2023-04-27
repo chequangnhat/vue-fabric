@@ -5,8 +5,11 @@ import UserInfoView from '../views/UserInfoView.vue'
 import AboutView from '../views/AboutView.vue'
 import LoginView from '../views/LoginView.vue'
 import LandingView from '../views/LandingView.vue'
-import TestDesign from '../views/TestDesign.vue'
 import CreateDesign from '../components/CreateDesign.vue'
+
+import TestDesign from '../views/TestDesign.vue'
+import TestCtrlScroll from '../views/TestCtrlScroll.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -52,6 +55,11 @@ const router = createRouter({
       path: '/test',
       name: 'test',
       component: TestDesign,
+    },
+    {
+      path: '/test_scroll',
+      name: 'test_scroll',
+      component: TestCtrlScroll,
     },
 
   ]
