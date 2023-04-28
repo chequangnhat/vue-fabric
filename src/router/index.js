@@ -9,6 +9,7 @@ import CreateDesign from '../components/CreateDesign.vue'
 
 import TestDesign from '../views/TestDesign.vue'
 import TestCtrlScroll from '../views/TestCtrlScroll.vue'
+import TestCanvasResponsive from '../views/TestCanvasResponsive.vue'
 
 
 const router = createRouter({
@@ -60,6 +61,11 @@ const router = createRouter({
       path: '/test_scroll',
       name: 'test_scroll',
       component: TestCtrlScroll,
+    },
+    {
+      path: '/test_cvrs',
+      name: 'test_cvrs',
+      component: TestCanvasResponsive,
     },
 
   ]

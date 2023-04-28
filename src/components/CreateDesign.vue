@@ -1,6 +1,6 @@
 <script setup>
 import { fabric } from "fabric";
-import { ref, onBeforeMount, onMounted, watch, onUpdated, onBeforeUpdate } from "vue";
+import { ref, reactive, onBeforeMount, onMounted, watch, onUpdated, onBeforeUpdate } from "vue";
 import html2pdf from "html2pdf.js";
 import domtoimage from "dom-to-image-more";
 import { saveAs } from "file-saver";

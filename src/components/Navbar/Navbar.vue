@@ -20,8 +20,8 @@ const sidebarClasses = computed(() => ({
 }));
 
 const mainClasses = computed(() => ({
-  "bg-black h-screen": true,
-  "w-24": isSidebarVisible.value,
+  "bg-slate-600 h-[95vh]": true,
+  "w-64": isSidebarVisible.value,
   "w-full": !isSidebarVisible.value,
   hidden: !isMainVisible.value,
 }));
@@ -31,26 +31,57 @@ const mainClasses = computed(() => ({
   <div class="flex">
     <div :class="sidebarClasses">
       <!-- Sidebar content goes here -->
-      <div
-        class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer mb-3"
-        @click="toggleMain"
-      >
-        <div>
-          <font-awesome-icon icon="fa-solid fa-border-all" class="text-xl font-light"/>
+      <button class="bg-slate-600 active:bg-slate-600 focus:bg-slate-600 ">
+        <div
+          class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer mb-3"
+          @click="toggleMain"
+        >
+          <div>
+            <font-awesome-icon
+              icon="fa-solid fa-border-all"
+              class="text-xl font-light"
+            />
+          </div>
+          <div class="text-base">layout</div>
         </div>
-        <div class="text-base">layout</div>
-      </div>
+      </button>
+      <button class="active:bg-slate-600 focus:bg-slate-600">
+        <div
+          class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer mb-3"
+          @click="toggleMain"
+        >
+          <div>
+            <font-awesome-icon
+              icon="fa-solid fa-image"
+              class="text-xl font-light"
+            />
+          </div>
+          <div class="text-base">image</div>
+        </div>
+      </button>
 
-      <div
-        class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer"
-        @click="toggleMain"
-      >
-        <div>
-          <font-awesome-icon icon="fa-solid fa-image" class="text-xl font-light"/>
+      <button class="active:bg-slate-600 focus:bg-slate-600">
+        <div
+          class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer mb-3"
+          @click="toggleMain"
+        >
+          <div>
+            <font-awesome-icon icon="fa-solid fa-folder-tree" />
+          </div>
+          <div class="text-base">folder</div>
         </div>
-        <div class="text-base">image</div>
-      </div>
-      <div><font-awesome-icon icon="fa-solid fa-image" /></div>
+      </button>
+      <button class="active:bg-slate-600 focus:bg-slate-600">
+        <div
+          class="w-16 h-16 text-white font-light flex flex-col justify-center items-center cursor-pointer"
+          @click="toggleMain"
+        >
+          <div>
+            <font-awesome-icon icon="fa-brands fa-meta" />
+          </div>
+          <div class="text-base">meta</div>
+        </div>
+      </button>
     </div>
     <div id="main" :class="mainClasses">
       <!-- Main content goes here -->
