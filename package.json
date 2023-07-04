@@ -18,6 +18,7 @@
     "file-saver": "^2.0.5",
     "html2pdf.js": "^0.10.1",
     "pinia": "^2.0.32",
+    "roughjs": "^4.5.2",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6"
   },

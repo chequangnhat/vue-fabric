@@ -5,8 +5,6 @@ import html2pdf from "html2pdf.js";
 import domtoimage from 'dom-to-image-more';
 import { saveAs } from 'file-saver';
 
-const canvas = ref({});
-
 onMounted(() => {
   var canvas = new fabric.Canvas("c");
   var circle = new fabric.Circle({
@@ -79,7 +77,4 @@ const toImageClick = () => {
   }
 }
 
-#canvas {
-  background-color: aqua;
-}
 </style>

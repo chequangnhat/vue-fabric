@@ -3,9 +3,12 @@ import HomeView from '../views/HomeView.vue'
 import OverView from '../views/OverView.vue'
 import UserInfoView from '../views/UserInfoView.vue'
 import AboutView from '../views/AboutView.vue'
+import TestRoughView from '../views/TestRoughView.vue'
+import RoughJsView from '../views/RoughJsView.vue'
 import LoginView from '../views/LoginView.vue'
 import LandingView from '../views/LandingView.vue'
 import CreateDesign from '../components/CreateDesign.vue'
+import RoughJs from '../components/RoughJs.vue'
 
 import TestDesign from '../views/TestDesign.vue'
 import TestCtrlScroll from '../views/TestCtrlScroll.vue'
@@ -35,6 +38,11 @@ const router = createRouter({
           name: 'design',
           component: CreateDesign,
         },
+        {
+          path: 'designrough',
+          name: 'designrough',
+          component: RoughJs,
+        },
       ]
     },
     {
@@ -51,6 +59,11 @@ const router = createRouter({
       path: '/about',
       name: 'about',
       component: AboutView,
+    },
+    {
+      path: '/testrough',
+      name: 'testrough',
+      component: RoughJsView,
     },
     {
       path: '/test',
