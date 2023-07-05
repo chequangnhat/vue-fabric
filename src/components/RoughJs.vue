@@ -1,26 +1,219 @@
 <template>
   <div>
-    <canvas ref="canvas" class="bg-slate-400"></canvas>
+    <div :style="{ position: 'fixed' }">
+      <input
+        type="radio"
+        id="selection"
+        :checked="tool === 'selection'"
+        :onChange="() => (tool = 'selection')"
+      />
+      <label htmlFor="selection">Selection</label>
+      <input
+        type="radio"
+        id="line"
+        :checked="tool === 'line'"
+        :onChange="() => (tool = 'line')"
+      />
+      <label htmlFor="line">Line</label>
+      <input
+        type="radio"
+        id="rectangle"
+        :checked="tool === 'rectangle'"
+        :onChange="() => (tool = 'rectangle')"
+      />
+      <label htmlFor="rectangle">Rectangle</label>
+    </div>
+    <canvas
+      ref="canvas"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+    >
+      Canvas
+    </canvas>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import rough from 'roughjs';
-
+import { ref, onMounted, watch, onBeforeMount, onBeforeUpdate, onUpdated } from "vue";
+import rough from "roughjs";
 
 const generator = rough.generator();
+
 const canvas = ref(null);
 let rc = null; // RoughCanvas instance
 
-// Initialize RoughCanvas on component mount
-onMounted(() => {
-  rc = rough.canvas(canvas.value);
+const windowWidth = ref(window.innerWidth);
+const windowHeight = ref(window.innerHeight);
 
-  // Draw a simple rectangle
-  const rectangle = rc.rectangle(10, 10, 100, 50);
-  const line = generator.line(10, 10, 100, 50)
-  rc.draw(rectangle);
-  rc.draw(line);
+const elements = ref([]);
+const action = ref("none");
+const tool = ref("selection");
+const selectedElement = ref(null);
+
+const createElement = (id, x1, y1, x2, y2, type) => {
+  const roughElement =
+    type == "line"
+      ? generator.line(x1, y1, x2, y2)
+      : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
+
+  return { id, x1, y1, x2, y2, type, roughElement };
+};
+
+const isWithinElement = (x, y, element) => {
+  const { x1, x2, y1, y2, type } = element;
+  if (type == "rectangle") {
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+
+    return x >= minX && x <= maxX && y >= minY && y <= maxY;
+  } else {
+    const a = { x: x1, y: y1 };
+    const b = { x: x2, y: y2 };
+    const c = { x, y };
+    const offset = distance(a, b) - (distance(a, c) + distance(b, c));
+    return Math.abs(offset) < 1;
+  }
+};
+
+const distance = (a, b) =>
+  Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+
+const getElementAtPosition = (x, y, elements) => {
+  return elements.find((element) => isWithinElement(x, y, element));
+};
+
+const exactMousePosition = (event) => {
+  const bounding = canvas.value.getBoundingClientRect();
+  // console.log(event.clientX, event.clientY)
+  // Calculate the mouse position relative to the canvas
+  const clientx = event.clientX - bounding.left;
+  const clienty = event.clientY - bounding.top;
+
+  console.log('Mouse X:', clientx);
+  console.log('Mouse Y:', clienty);
+  return { clientx: clientx, clienty: clienty };
+}
+
+const handleMouseDown = (event) => {
+
+  const { clientx: clientX, clienty: clientY } = exactMousePosition(event);
+
+  console.log("mouse down", clientX, clientY)
+  if (tool.value == "selection") {
+    //moving
+    const element = getElementAtPosition(clientX, clientY, elements.value);
+    if (element) {
+      const offsetX = clientX - element.x1;
+      const offsetY = clientY - element.y1;
+      selectedElement.value = { ...element, offsetX, offsetY };
+      action.value = "moving";
+    }
+  } else {
+    const id = elements.value.length;
+    const element = createElement(
+      id,
+      clientX,
+      clientY,
+      clientX,
+      clientY,
+      tool.value
+    );
+    elements.value.push(element);
+
+    action.value = "drawing";
+  }
+};
+
+const handleMouseMove = (event) => {
+  // const { clientX, clientY } = event;
+  const { clientx: clientX, clienty: clientY } = exactMousePosition(event);
+
+
+  if (tool.value == "selection") {
+    event.target.style.cursor = getElementAtPosition(
+      clientX,
+      clientY,
+      elements.value
+    )
+      ? "move"
+      : "default";
+  }
+
+  if (action.value == "drawing") {
+    const index = elements.value.length - 1;
+    const { x1, y1 } = elements.value[index];
+    updateElement(index, x1, y1, clientX, clientY, tool.value);
+  } else if (action.value == "moving") {
+    const { id, x1, x2, y1, y2, type, offsetX, offsetY } =
+      selectedElement.value;
+    const width = x2 - x1;
+    const height = y2 - y1;
+    const newX1 = clientX - offsetX;
+    const newY1 = clientY - offsetY;
+    updateElement(id, newX1, newY1, newX1 + width, newY1 + height, type);
+  }
+};
+
+const handleMouseUp = () => {
+  action.value = false;
+  selectedElement.value = null;
+};
+
+const updateElement = (id, x1, y1, x2, y2, type) => {
+  const updatedElement = createElement(id, x1, y1, x2, y2, type);
+
+  const elementsCopy = [...elements.value];
+  elementsCopy[id] = updatedElement;
+  elements.value = elementsCopy;
+};
+
+function handleResize() {
+  console.log("handleResize call");
+  windowWidth.value = window.innerWidth;
+  windowHeight.value = window.innerHeight;
+}
+
+onMounted(() => {
+  // window.addEventListener("resize", handleResize);
+  
+  rc = rough.canvas(canvas.value);
+  
+  // Set canvas size to fullscreen
+  // canvas.value.width = windowWidth.value;
+  // canvas.value.height = windowHeight.value;
+
+  // Set canvas size to fullscreen
+  canvas.value.width = 500;
+  canvas.value.height = 500;
+  const rect = generator.line(50, 50, 200, 100)
+  rc.draw(rect)
+});
+
+function redraw(){
+  //clear canvas
+  const ctx = canvas.value.getContext('2d');
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
+  //redraw all elements
+  elements.value.forEach(({ roughElement }) => rc.draw(roughElement));
+}
+
+// watch(windowWidth, () => {
+//   canvas.value.width = windowWidth.value;
+//   canvas.value.height = windowHeight.value;
+// });
+
+watch(elements, () => {
+  console.log("onUpdated watch")
+  redraw()
 });
 </script>
+
+<style>
+canvas {
+  background-color: aquamarine;
+}
+</style>

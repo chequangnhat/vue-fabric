@@ -1,24 +1,55 @@
-<script setup>
-import { fabric } from "fabric";
-import {
-  ref,
-  reactive,
-  onBeforeMount,
-  onMounted,
-  watch,
-  onUpdated,
-  onBeforeUpdate,
-} from "vue";
-import html2pdf from "html2pdf.js";
-import domtoimage from "dom-to-image-more";
-import { saveAs } from "file-saver";
+<template>
+  <div>
+    <div :style="{ position: 'fixed' }">
+      <input
+        type="radio"
+        id="selection"
+        :checked="tool === 'selection'"
+        :onChange="() => (tool = 'selection')"
+      />
+      <label htmlFor="selection">Selection</label>
+      <input
+        type="radio"
+        id="line"
+        :checked="tool === 'line'"
+        :onChange="() => (tool = 'line')"
+      />
+      <label htmlFor="line">Line</label>
+      <input
+        type="radio"
+        id="rectangle"
+        :checked="tool === 'rectangle'"
+        :onChange="() => (tool = 'rectangle')"
+      />
+      <label htmlFor="rectangle">Rectangle</label>
+    </div>
+    <canvas
+      ref="canvas"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+    >
+      Canvas
+    </canvas>
+  </div>
+</template>
 
+<script setup>
+import { ref, onMounted, watch, onBeforeMount, onBeforeUpdate, onUpdated } from "vue";
 import rough from "roughjs";
+
 const generator = rough.generator();
-const elements = reactive([])
-const action = ref("none")
-const tool = ref('line')
-const selectedElement = ref(null)
+
+const canvas = ref(null);
+let rc = null; // RoughCanvas instance
+
+const windowWidth = ref(window.innerWidth);
+const windowHeight = ref(window.innerHeight);
+
+const elements = ref([]);
+const action = ref("none");
+const tool = ref("selection");
+const selectedElement = ref(null);
 
 const createElement = (id, x1, y1, x2, y2, type) => {
   const roughElement =
@@ -42,83 +73,65 @@ const isWithinElement = (x, y, element) => {
     const a = { x: x1, y: y1 };
     const b = { x: x2, y: y2 };
     const c = { x, y };
-    const offset = distance(a, b) - (distance(a, c) + distance(b, c)) ;
-    console.log("distance ab",  distance(a, b))
-    console.log("distance ac",  distance(a, c))
-    console.log("distance bc",  distance(b, c))
-    console.log("off ",offset)
+    const offset = distance(a, b) - (distance(a, c) + distance(b, c));
     return Math.abs(offset) < 1;
   }
 };
 
-const distance = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+const distance = (a, b) =>
+  Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 
 const getElementAtPosition = (x, y, elements) => {
   return elements.find((element) => isWithinElement(x, y, element));
 };
 
-const Draw = () => {
-  const [elements, setElements] = useState([]);
-  const [action, setAction] = useState("none");
-  const [tool, setTool] = useState("line");
-  const [selectedElement, setSelectedElement] = useState(null);
-
-  useLayoutEffect(() => {
-    const canvas = document.getElementById("canvas");
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    const roughCanvas = rough.canvas(canvas);
-    // const line = generator.line(10, 10, 210, 210);
-    // roughCanvas.draw(line);
-
-    elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
-  }, [elements]);
-
-  const updateElement = (id, x1, y1, x2, y2, type) => {
-    const updatedElement = createElement(id, x1, y1, x2, y2, type);
-
-      const elementsCopy = [...elements];
-      elementsCopy[id] = updatedElement;
-      setElements(elementsCopy);
-  }
-}
-
 const handleMouseDown = (event) => {
   const { clientX, clientY } = event;
-  if (tool == "selection") {
+  if (tool.value == "selection") {
     //moving
-    const element = getElementAtPosition(clientX, clientY, elements);
+    const element = getElementAtPosition(clientX, clientY, elements.value);
     if (element) {
       const offsetX = clientX - element.x1;
       const offsetY = clientY - element.y1;
-      element = { ...element, offsetX, offsetY };
-      action = "moving";
+      selectedElement.value = { ...element, offsetX, offsetY };
+      action.value = "moving";
     }
   } else {
-    const id = elements.length;
-    const element = createElement(id, clientX, clientY, clientX, clientY, tool);
-    elements = (prevState) => [...prevState, element];
+    const id = elements.value.length;
+    const element = createElement(
+      id,
+      clientX,
+      clientY,
+      clientX,
+      clientY,
+      tool.value
+    );
+    elements.value.push(element);
 
-    action = "drawing";
+    action.value = "drawing";
   }
 };
 
 const handleMouseMove = (event) => {
   const { clientX, clientY } = event;
 
-  if (tool == "selection") {
-    event.target.style.cursor = getElementAtPosition(clientX, clientY, elements)
+  if (tool.value == "selection") {
+    event.target.style.cursor = getElementAtPosition(
+      clientX,
+      clientY,
+      elements.value
+    )
       ? "move"
       : "default";
   }
 
-  if (action == "drawing") {
-    const index = elements.length - 1;
-    const { x1, y1 } = elements[index];
-    updateElement(index, x1, y1, clientX, clientY, tool);
-  } else if (action == "moving") {
-    const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
+  if (action.value == "drawing") {
+    const index = elements.value.length - 1;
+    const { x1, y1 } = elements.value[index];
+    updateElement(index, x1, y1, clientX, clientY, tool.value);
+  } else if (action.value == "moving") {
+    const { id, x1, x2, y1, y2, type, offsetX, offsetY } =
+      selectedElement.value;
     const width = x2 - x1;
     const height = y2 - y1;
     const newX1 = clientX - offsetX;
@@ -128,44 +141,55 @@ const handleMouseMove = (event) => {
 };
 
 const handleMouseUp = () => {
-  actions = false;
-  selectedElement = null;
+  action.value = false;
+  selectedElement.value = null;
 };
+
+const updateElement = (id, x1, y1, x2, y2, type) => {
+  const updatedElement = createElement(id, x1, y1, x2, y2, type);
+
+  const elementsCopy = [...elements.value];
+  elementsCopy[id] = updatedElement;
+  elements.value = elementsCopy;
+};
+
+function handleResize() {
+  console.log("handleResize call");
+  windowWidth.value = window.innerWidth;
+  windowHeight.value = window.innerHeight;
+}
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+  rc = rough.canvas(canvas.value);
+  
+  // Set canvas size to fullscreen
+  canvas.value.width = windowWidth.value;
+  canvas.value.height = windowHeight.value;
+});
+
+function redraw(){
+  //clear canvas
+  const ctx = canvas.value.getContext('2d');
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
+  //redraw all elements
+  elements.value.forEach(({ roughElement }) => rc.draw(roughElement));
+}
+
+watch(windowWidth, () => {
+  canvas.value.width = windowWidth.value;
+  canvas.value.height = windowHeight.value;
+});
+
+watch(elements, () => {
+  console.log("onUpdated watch")
+  redraw()
+});
 </script>
 
-<template>
-  <div>
-    <div :style="{ 'position': 'fixed' }">
-        <input
-          type="radio"
-          id="selection"
-          :checked="tool === 'selection'"
-          :onChange="() => tool = 'selection'"
-        />
-        <label htmlFor="selection">Selection</label>
-        <input
-          type="radio"
-          id="line"
-          :checked="tool === 'line'"
-          :onChange="() => tool = 'line'"
-        />
-        <label htmlFor="line">Line</label>
-        <input
-          type="radio"
-          id="rectangle"
-          :checked="tool === 'rectangle'"
-          :onChange="() => tool = 'rectangle'"
-        />
-        <label htmlFor="rectangle">Rectangle</label>
-      </div>
-    <canvas
-      id="canvas"
-      class="w-full h-full bg-red-300"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-    >
-      Canvas
-    </canvas>
-  </div>
-</template>
+<style>
+/* canvas {
+  background-color: aquamarine;
+} */
+</style>
